@@ -9,9 +9,38 @@ on: [push, pull_request]
 name: Quickstart
 
 jobs:
-  check:
-    name: Check
+  matrix:
+    name: Generate job matrix
     runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+
+      - name: Install stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+
+      - name: Install `cargo-feature-combinations`
+        uses: actions-rs/install@v0.1
+        with:
+          crate: cargo-feature-combinations
+          version: latest
+
+      - name: Generate job matrix
+        id: matrix
+        run: echo "::set-output name=matrix::{\"include\":$(cargo feature-combinations matrix)}"
+
+  check:
+    name: Check ${{ matrix.name }} (${{ matrix.features }})
+    needs: matrix
+    runs-on: ubuntu-latest
+    strategy:
+      matrix: ${{ fromJson(needs.matrix.outputs.matrix) }}
     steps:
       - name: Checkout sources
         uses: actions/checkout@v2
@@ -27,11 +56,14 @@ jobs:
         uses: actions-rs/cargo@v1
         continue-on-error: true  # WARNING: only for this example, remove it!
         with:
-          command: check
+          command: check --all-targets --package ${{ matrix.name }} --features ${{ matrix.features }}
 
   test:
-    name: Test Suite
+    name: Test ${{ matrix.name }} (${{ matrix.features }})
+    needs: matrix
     runs-on: ubuntu-latest
+    strategy:
+      matrix: ${{ fromJson(needs.matrix.outputs.matrix) }}
     steps:
       - name: Checkout sources
         uses: actions/checkout@v2
@@ -43,14 +75,14 @@ jobs:
           toolchain: stable
           override: true
 
-      - name: Run cargo test
+      - name: Run `cargo test`
         uses: actions-rs/cargo@v1
         continue-on-error: true  # WARNING: only for this example, remove it!
         with:
-          command: test
+          command: test --package ${{ matrix.name }} --features ${{ matrix.features }}
 
-  lints:
-    name: Lints
+  lint:
+    name: Lint
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
@@ -62,18 +94,34 @@ jobs:
           profile: minimal
           toolchain: stable
           override: true
-          components: rustfmt, clippy
+          components: clippy
 
-      - name: Run cargo fmt
+      - name: Run `cargo clippy`
+        uses: actions-rs/clippy-check@v1
+        continue-on-error: true  # WARNING: only for this example, remove it!
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          args: --all-targets --all-features -- -D warnings
+
+  formatting:
+    name: Formatting
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+
+      - name: Install stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+          components: rustfmt
+
+      - name: Run `cargo fmt`
         uses: actions-rs/cargo@v1
         continue-on-error: true  # WARNING: only for this example, remove it!
         with:
           command: fmt
           args: --all -- --check
 
-      - name: Run cargo clippy
-        uses: actions-rs/cargo@v1
-        continue-on-error: true  # WARNING: only for this example, remove it!
-        with:
-          command: clippy
-          args: -- -D warnings
