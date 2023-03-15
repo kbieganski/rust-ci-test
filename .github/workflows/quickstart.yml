@@ -59,11 +59,13 @@ jobs:
           command: check --all-targets --package ${{ matrix.name }} --features ${{ matrix.features }}
 
   test:
-    name: Test ${{ matrix.name }} (${{ matrix.features }})
+    name: Test ${{ matrix.package.name }} (${{ matrix.package.features }}) on ${{ matrix.platform }}
     needs: matrix
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.platform }}
     strategy:
-      matrix: ${{ fromJson(needs.matrix.outputs.matrix) }}
+      matrix:
+        platform: [ubuntu-latest, macos-latest, windows-latest]
+        package: ${{ fromJson(needs.matrix.outputs.matrix) }}
     steps:
       - name: Checkout sources
         uses: actions/checkout@v2
@@ -79,7 +81,7 @@ jobs:
         uses: actions-rs/cargo@v1
         continue-on-error: true  # WARNING: only for this example, remove it!
         with:
-          command: test --package ${{ matrix.name }} --features ${{ matrix.features }}
+          command: test --package ${{ matrix.package.name }} --features ${{ matrix.package.features }}
 
   lint:
     name: Lint
