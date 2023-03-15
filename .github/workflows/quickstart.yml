@@ -56,7 +56,8 @@ jobs:
         uses: actions-rs/cargo@v1
         continue-on-error: true  # WARNING: only for this example, remove it!
         with:
-          command: check --all-targets --package ${{ matrix.name }} --features ${{ matrix.features }}
+          command: check
+          args: --all-targets --package ${{ matrix.name }} --features ${{ matrix.features }}
 
   test:
     name: Test ${{ matrix.package.name }} (${{ matrix.package.features }}) on ${{ matrix.platform }}
@@ -81,7 +82,8 @@ jobs:
         uses: actions-rs/cargo@v1
         continue-on-error: true  # WARNING: only for this example, remove it!
         with:
-          command: test --package ${{ matrix.package.name }} --features ${{ matrix.package.features }}
+          command: test
+          args: --package ${{ matrix.package.name }} --features ${{ matrix.package.features }}
 
   lint:
     name: Lint
