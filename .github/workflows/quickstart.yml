@@ -16,6 +16,9 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v3
 
+      - name: Update Rust
+        run: rustup update
+
       - name: Run cargo check
         run: cargo check --color always --all-targets --all-features
         continue-on-error: true  # WARNING: only for this example, remove it!
@@ -27,6 +30,9 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v3
 
+      - name: Update Rust
+        run: rustup update
+
       - name: Run `cargo clippy`
         run: cargo clippy --color always --all-targets --all-features -- -D warnings
         continue-on-error: true  # WARNING: only for this example, remove it!
@@ -37,6 +43,9 @@ jobs:
     steps:
       - name: Checkout sources
         uses: actions/checkout@v3
+
+      - name: Update Rust
+        run: rustup update
 
       - name: Run `cargo fmt`
         run: cargo fmt --all -- --check
@@ -51,6 +60,9 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v3
 
+      - name: Update Rust
+        run: rustup update
+
       - name: Setup cache
         uses: Swatinem/rust-cache@v2
 
@@ -63,7 +75,7 @@ jobs:
           echo "::set-output name=matrix::{\"include\":$(cargo feature-combinations matrix | jq -c '[.[] + (["ubuntu-latest","macos-latest","windows-latest"][] | [{platform: .}])[]]')}"
 
   test:
-    name: Test ${{ matrix.name }} `{features="${{ matrix.features }}", platform="${{ matrix.platform }}"}`
+    name: Test ${{ matrix.name }} | ${{ matrix.features }} | ${{ matrix.platform }}
     needs: matrix
     strategy:
       matrix: ${{ fromJson(needs.matrix.outputs.matrix) }}
@@ -71,13 +83,16 @@ jobs:
     steps:
       - name: Checkout sources
         uses: actions/checkout@v3
+
+      - name: Update Rust
+        run: rustup update
 
       - name: Run `cargo test`
         run: cargo test --color always --package ${{ matrix.name }} --features "${{ matrix.features }}"
         continue-on-error: true  # WARNING: only for this example, remove it!
 
   bench:
-    name: Benchmark ${{ matrix.name }} `{features="${{ matrix.features }}", platform="${{ matrix.platform }}"}`
+    name: Benchmark ${{ matrix.name }} | "${{ matrix.features }}" | ${{ matrix.platform }}
     needs: matrix
     strategy:
       matrix: ${{ fromJson(needs.matrix.outputs.matrix) }}
@@ -85,6 +100,9 @@ jobs:
     steps:
       - name: Checkout sources
         uses: actions/checkout@v3
+
+      - name: Update Rust
+        run: rustup update
 
       - name: Run `cargo bench`
         run: cargo bench --color always --package ${{ matrix.name }} --features "${{ matrix.features }}"
