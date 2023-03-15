@@ -9,38 +9,9 @@ on: [push, pull_request]
 name: Quickstart
 
 jobs:
-  matrix:
-    name: Generate job matrix
-    runs-on: ubuntu-latest
-    outputs:
-      matrix: ${{ steps.matrix.outputs.matrix }}
-    steps:
-      - name: Checkout sources
-        uses: actions/checkout@v2
-
-      - name: Install stable toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
-
-      - name: Install `cargo-feature-combinations`
-        uses: actions-rs/install@v0.1
-        with:
-          crate: cargo-feature-combinations
-          version: latest
-
-      - name: Generate job matrix
-        id: matrix
-        run: echo "::set-output name=matrix::{\"include\":$(cargo feature-combinations matrix)}"
-
   check:
-    name: Check ${{ matrix.name }} (${{ matrix.features }})
-    needs: matrix
+    name: Check
     runs-on: ubuntu-latest
-    strategy:
-      matrix: ${{ fromJson(needs.matrix.outputs.matrix) }}
     steps:
       - name: Checkout sources
         uses: actions/checkout@v2
@@ -58,32 +29,6 @@ jobs:
         with:
           command: check
           args: --all-targets --package ${{ matrix.name }} --features ${{ matrix.features }}
-
-  test:
-    name: Test ${{ matrix.package.name }} (${{ matrix.package.features }}) on ${{ matrix.platform }}
-    needs: matrix
-    runs-on: ${{ matrix.platform }}
-    strategy:
-      matrix:
-        platform: [ubuntu-latest, macos-latest, windows-latest]
-        package: ${{ fromJson(needs.matrix.outputs.matrix) }}
-    steps:
-      - name: Checkout sources
-        uses: actions/checkout@v2
-
-      - name: Install stable toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
-
-      - name: Run `cargo test`
-        uses: actions-rs/cargo@v1
-        continue-on-error: true  # WARNING: only for this example, remove it!
-        with:
-          command: test
-          args: --package ${{ matrix.package.name }} --features ${{ matrix.package.features }}
 
   lint:
     name: Lint
@@ -128,4 +73,84 @@ jobs:
         with:
           command: fmt
           args: --all -- --check
+
+  matrix:
+    name: Generate job matrix
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+
+      - name: Install stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+
+      - name: Install `cargo-feature-combinations`
+        uses: actions-rs/install@v0.1
+        with:
+          crate: cargo-feature-combinations
+          version: latest
+
+      - name: Generate job matrix
+        id: matrix
+        run: echo "::set-output name=matrix::$(cargo feature-combinations matrix)"
+
+  test:
+    name: Test ${{ matrix.name }} (${{ matrix.features }}) on ${{ matrix.platform }}
+    needs: matrix
+    strategy:
+      matrix:
+        platform: [ubuntu-latest, macos-latest, windows-latest]
+        name: []
+        features: []
+        include: ${{ fromJson(needs.matrix.outputs.matrix) }}
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+
+      - name: Install stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+
+      - name: Run `cargo test`
+        uses: actions-rs/cargo@v1
+        continue-on-error: true  # WARNING: only for this example, remove it!
+        with:
+          command: test
+          args: --package ${{ matrix.name }} --features ${{ matrix.features }}
+
+  bench:
+    name: Benchmark ${{ matrix.name }} (${{ matrix.features }}) on ${{ matrix.platform }}
+    needs: matrix
+    strategy:
+      matrix:
+        platform: [ubuntu-latest, macos-latest, windows-latest]
+        include: ${{ fromJson(needs.matrix.outputs.matrix) }}
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+
+      - name: Install stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+
+      - name: Run `cargo bench`
+        uses: actions-rs/cargo@v1
+        continue-on-error: true  # WARNING: only for this example, remove it!
+        with:
+          command: bench
+          args: --package ${{ matrix.name }} --features ${{ matrix.features }}
 
