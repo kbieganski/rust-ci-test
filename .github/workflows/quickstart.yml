@@ -19,6 +19,9 @@ jobs:
       - name: Update Rust
         run: rustup update
 
+      - name: Setup cache
+        uses: Swatinem/rust-cache@v2
+
       - name: Run cargo check
         run: cargo check --color always --all-targets --all-features
         continue-on-error: true  # WARNING: only for this example, remove it!
@@ -33,6 +36,9 @@ jobs:
       - name: Update Rust
         run: rustup update
 
+      - name: Setup cache
+        uses: Swatinem/rust-cache@v2
+
       - name: Run `cargo clippy`
         run: cargo clippy --color always --all-targets --all-features -- -D warnings
         continue-on-error: true  # WARNING: only for this example, remove it!
@@ -46,6 +52,9 @@ jobs:
 
       - name: Update Rust
         run: rustup update
+
+      - name: Setup cache
+        uses: Swatinem/rust-cache@v2
 
       - name: Run `cargo fmt`
         run: cargo fmt --all -- --check
@@ -87,6 +96,9 @@ jobs:
       - name: Update Rust
         run: rustup update
 
+      - name: Setup cache
+        uses: Swatinem/rust-cache@v2
+
       - name: Run `cargo test`
         run: cargo test --color always --package ${{ matrix.name }} --features "${{ matrix.features }}"
         continue-on-error: true  # WARNING: only for this example, remove it!
@@ -103,6 +115,9 @@ jobs:
 
       - name: Update Rust
         run: rustup update
+
+      - name: Setup cache
+        uses: Swatinem/rust-cache@v2
 
       - name: Run `cargo bench`
         run: cargo bench --color always --package ${{ matrix.name }} --features "${{ matrix.features }}"
