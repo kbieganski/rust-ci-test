@@ -17,11 +17,8 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Run cargo check
-        uses: actions-rs/cargo@v1
+        run: cargo check --all-targets --all-features
         continue-on-error: true  # WARNING: only for this example, remove it!
-        with:
-          command: check
-          args: --all-targets --package ${{ matrix.name }} --features ${{ matrix.features }}
 
   lint:
     name: Lint
@@ -31,11 +28,8 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Run `cargo clippy`
-        uses: actions-rs/clippy-check@v1
+        run: cargo clippy --all-targets --all-features -- -D warnings
         continue-on-error: true  # WARNING: only for this example, remove it!
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          args: --all-targets --all-features -- -D warnings
 
   formatting:
     name: Formatting
@@ -45,11 +39,8 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Run `cargo fmt`
-        uses: actions-rs/cargo@v1
+        run: cargo fmt --all -- --check
         continue-on-error: true  # WARNING: only for this example, remove it!
-        with:
-          command: fmt
-          args: --all -- --check
 
   matrix:
     name: Generate job matrix
@@ -62,6 +53,9 @@ jobs:
 
       - name: Setup cache
         uses: Swatinem/rust-cache@v2
+
+      - name: Install `cargo-feature-combinations`
+        run: cargo install cargo-feature-combinations
 
       - name: Generate job matrix
         id: matrix
@@ -79,11 +73,8 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Run `cargo test`
-        uses: actions-rs/cargo@v1
+        run: cargo test --package ${{ matrix.name }} --features ${{ matrix.features }}
         continue-on-error: true  # WARNING: only for this example, remove it!
-        with:
-          command: test
-          args: --package ${{ matrix.name }} --features ${{ matrix.features }}
 
   bench:
     name: Benchmark ${{ matrix.name }} (${{ matrix.features }}) on ${{ matrix.platform }}
@@ -96,9 +87,5 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Run `cargo bench`
-        uses: actions-rs/cargo@v1
+        run: cargo bench --package ${{ matrix.name }} --features ${{ matrix.features }}
         continue-on-error: true  # WARNING: only for this example, remove it!
-        with:
-          command: bench
-          args: --package ${{ matrix.name }} --features ${{ matrix.features }}
-
