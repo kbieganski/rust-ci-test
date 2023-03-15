@@ -84,7 +84,7 @@ jobs:
           echo "::set-output name=matrix::{\"include\":$(cargo feature-combinations matrix | jq -c '[.[] + (["ubuntu-latest","macos-latest","windows-latest"][] | [{platform: .}])[]]')}"
 
   test:
-    name: Test ${{ matrix.name }} | ${{ matrix.platform }} | ${{ matrix.features }}
+    name: "Test ${{ matrix.name }} | ${{ matrix.platform }} | features: [${{ matrix.features }}]"
     needs: matrix
     strategy:
       matrix: ${{ fromJson(needs.matrix.outputs.matrix) }}
@@ -104,7 +104,7 @@ jobs:
         continue-on-error: true  # WARNING: only for this example, remove it!
 
   bench:
-    name: Benchmark ${{ matrix.name }} | ${{ matrix.platform }} | ${{ matrix.features }}
+    name: "Benchmark ${{ matrix.name }} | ${{ matrix.platform }} | features: [${{ matrix.features }}]"
     needs: matrix
     strategy:
       matrix: ${{ fromJson(needs.matrix.outputs.matrix) }}
