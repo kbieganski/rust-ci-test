@@ -9,8 +9,6 @@ publish = false
 
 [features]
 a = []
-b = []
-c = []
 
 [dependencies]
 example-sys = { path = "../example-sys" }
