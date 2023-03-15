@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Install stable toolchain
         uses: actions-rs/toolchain@v1
@@ -35,7 +35,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Install stable toolchain
         uses: actions-rs/toolchain@v1
@@ -57,7 +57,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Install stable toolchain
         uses: actions-rs/toolchain@v1
@@ -81,7 +81,7 @@ jobs:
       matrix: ${{ steps.matrix.outputs.matrix }}
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Install stable toolchain
         uses: actions-rs/toolchain@v1
@@ -89,6 +89,9 @@ jobs:
           profile: minimal
           toolchain: stable
           override: true
+
+      - name: Setup cache
+        uses: Swatinem/rust-cache@v2
 
       - name: Install `cargo-feature-combinations`
         uses: actions-rs/install@v0.1
@@ -98,21 +101,18 @@ jobs:
 
       - name: Generate job matrix
         id: matrix
-        run: echo "::set-output name=matrix::$(cargo feature-combinations matrix)"
+        run: |
+          echo "::set-output name=matrix::{\"include\":$(cargo feature-combinations matrix | jq -c '[.[] + (["ubuntu-latest","macos-latest","windows-latest"][] | [{platform: .}])[]]')}"
 
   test:
     name: Test ${{ matrix.name }} (${{ matrix.features }}) on ${{ matrix.platform }}
     needs: matrix
     strategy:
-      matrix:
-        platform: [ubuntu-latest, macos-latest, windows-latest]
-        name: []
-        features: []
-        include: ${{ fromJson(needs.matrix.outputs.matrix) }}
+      matrix: ${{ fromJson(needs.matrix.outputs.matrix) }}
     runs-on: ${{ matrix.platform }}
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Install stable toolchain
         uses: actions-rs/toolchain@v1
@@ -132,13 +132,11 @@ jobs:
     name: Benchmark ${{ matrix.name }} (${{ matrix.features }}) on ${{ matrix.platform }}
     needs: matrix
     strategy:
-      matrix:
-        platform: [ubuntu-latest, macos-latest, windows-latest]
-        include: ${{ fromJson(needs.matrix.outputs.matrix) }}
+      matrix: ${{ fromJson(needs.matrix.outputs.matrix) }}
     runs-on: ${{ matrix.platform }}
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Install stable toolchain
         uses: actions-rs/toolchain@v1
