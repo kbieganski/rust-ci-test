@@ -1,4 +1,4 @@
-name: Test
+name: Check & Test
 
 on:
   pull_request:
@@ -12,7 +12,7 @@ jobs:
     uses: ./.github/workflows/check.yml
 
   test:
-    name: Test (${{ matrix.platform.name }})
+    name: ${{ matrix.platform.name }}
     strategy:
       matrix:
         platform: [{id: ubuntu-latest, name: Linux},

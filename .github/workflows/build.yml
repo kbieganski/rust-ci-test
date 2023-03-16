@@ -11,7 +11,7 @@ env:
 
 jobs:
   test:
-    name: Test
+    name: Check & Test
     uses: ./.github/workflows/test.yml
 
   build-linux:
