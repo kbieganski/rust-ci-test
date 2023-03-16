@@ -1,0 +1,51 @@
+name: Test
+
+on:
+  pull_request:
+    branches: [main]
+  push:  # TODO: remove
+  workflow_call:
+
+jobs:
+  check:
+    name: Check
+    uses: ./.github/workflows/check.yml
+
+  test:
+    name: Test (${{ matrix.platform.name }})
+    strategy:
+      matrix:
+        platform: [{id: ubuntu-latest, name: Linux},
+                   {id: macos-latest, name: MacOS},
+                   {id: windows-latest, name: Windows}]
+      fail-fast: false
+    runs-on: ${{ matrix.platform.id }}
+    needs: check
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Update Rust
+        run: rustup update
+
+      - name: Setup cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-build-stable-${{ hashFiles('**/Cargo.toml') }}
+
+      - name: Install cargo-hack
+        run: cargo install cargo-hack
+
+      - name: Test
+        run: cargo hack --workspace --feature-powerset --color always test
+
+      - name: Bench
+        run: cargo hack --workspace --feature-powerset --color always bench
+        if: ${{ success() || failure() }}

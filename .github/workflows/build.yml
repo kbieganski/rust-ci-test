@@ -1,0 +1,142 @@
+name: Build
+
+on:
+  push:
+    branches: [main, master] #TODO: fix
+    tags-ignore: ["[0-9]+.[0-9]+*"]
+  workflow_call:
+
+env:
+  executable: example
+
+jobs:
+  test:
+    name: Test
+    uses: ./.github/workflows/test.yml
+
+  build-linux:
+    name: Build (Linux)
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Update Rust
+        run: rustup update
+
+      - name: Setup cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-build-stable-${{ hashFiles('**/Cargo.toml') }}
+
+      - name: Build
+        run: cargo run --release --target x86_64-unknown-linux-gnu
+
+      - name: Prepare
+        run: |
+          mv target/x86_64-unknown-linux-gnu/release/${{ env.executable }} .
+          strip ${{ env.executable }}
+
+      - name: Upload
+        uses: actions/upload-artifact@v3
+        with:
+          path: |
+            ${{ env.executable }}
+            README.md
+            LICENSE
+          name: linux
+
+  build-windows:
+    name: Build for Windows
+    runs-on: windows-latest
+    needs: test
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-build-stable-${{ hashFiles('**/Cargo.toml') }}
+
+      - name: Build release
+        run: cargo build --release --target x86_64-pc-windows-msvc
+
+      - name: Prepare package
+        run: |
+          mv target/x86_64-pc-windows-msvc/release/${{ env.executable }}.exe .
+
+      - name: Upload
+        uses: actions/upload-artifact@v3
+        with:
+          path: |
+            ${{ env.executable }}.exe
+            README.md
+            LICENSE
+          name: windows
+
+  build-macos:
+    name: Build (MacOS)
+    runs-on: macos-latest
+    needs: test
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Update Rust
+        run: rustup update
+
+      - name: Setup cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-build-stable-${{ hashFiles('**/Cargo.toml') }}
+
+      - name: Build for Apple Silicon
+        run: |
+          SDKROOT=$(xcrun -sdk macosx --show-sdk-path) \
+            MACOSX_DEPLOYMENT_TARGET=$(xcrun -sdk macosx --show-sdk-platform-version) \
+            cargo build --release --target aarch64-apple-darwin
+
+      - name: Build for x86 Apple
+        run: |
+          SDKROOT=$(xcrun -sdk macosx --show-sdk-path) \
+            MACOSX_DEPLOYMENT_TARGET=$(xcrun -sdk macosx --show-sdk-platform-version) \
+            cargo build --release --target x86_64-apple-darwin
+
+      - name: Create Universal Binary
+        run: |
+          lipo -create -output ${{ env.executable }} \
+            target/aarch64-apple-darwin/release/${{ env.executable }} \
+            target/x86_64-apple-darwin/release/${{ env.executable }}
+
+      - name: Upload
+        uses: actions/upload-artifact@v3
+        with:
+          path: |
+            ${{ env.executable }}
+            README.md
+            LICENSE
+          name: macos
+
