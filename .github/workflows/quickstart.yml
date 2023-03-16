@@ -6,11 +6,11 @@
 
 on: [push, pull_request]
 
-name: Quickstart
+name: Check and test
 
 jobs:
-  check:
-    name: Check
+  general:
+    name: General checks
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
@@ -22,43 +22,19 @@ jobs:
       - name: Setup cache
         uses: Swatinem/rust-cache@v2
 
-      - name: Run cargo check
-        run: cargo check --color always --all-targets --all-features
-        continue-on-error: true  # WARNING: only for this example, remove it!
+      - name: Install `cargo-audit`, `cargo-deny`
+        run: cargo install cargo-audit cargo-deny
 
-  lint:
-    name: Lint
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout sources
-        uses: actions/checkout@v3
-
-      - name: Update Rust
-        run: rustup update
-
-      - name: Setup cache
-        uses: Swatinem/rust-cache@v2
-
-      - name: Run `cargo clippy`
-        run: cargo clippy --color always --all-targets --all-features -- -D warnings
-        continue-on-error: true  # WARNING: only for this example, remove it!
-
-  formatting:
-    name: Formatting
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout sources
-        uses: actions/checkout@v3
-
-      - name: Update Rust
-        run: rustup update
-
-      - name: Setup cache
-        uses: Swatinem/rust-cache@v2
-
-      - name: Run `cargo fmt`
+      - name: Formatting
         run: cargo fmt --all -- --check
-        continue-on-error: true  # WARNING: only for this example, remove it!
+
+      - name: Audit
+        run: cargo audit --color always
+        if: ${{ success() || failure() }}
+
+      - name: Deny
+        run: cargo deny --color always --all-features
+        if: ${{ success() || failure() }}
 
   matrix:
     name: Generate job matrix
@@ -83,6 +59,30 @@ jobs:
         run: |
           echo "::set-output name=matrix::{\"include\":$(cargo feature-combinations matrix | jq -c '[.[] + (["ubuntu-latest","macos-latest","windows-latest"][] | [{platform: .}])[]]')}"
 
+  check:
+    name: "Check ${{ matrix.name }} | ${{ matrix.platform }} | features: [${{ matrix.features }}]"
+    needs: matrix
+    strategy:
+      matrix: ${{ fromJson(needs.matrix.outputs.matrix) }}
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v3
+
+      - name: Update Rust
+        run: rustup update
+
+      - name: Check
+        run: cargo check --color always --package ${{ matrix.name }} --features "${{ matrix.features }}"
+
+      - name: Build
+        run: cargo build --release
+        if: ${{ success() || failure() }}
+
+      - name: Lint
+        run: cargo clippy --color always --package ${{ matrix.name }} --no-deps --features "${{ matrix.features }}" -- -D warnings
+        if: ${{ success() || failure() }}
+
   test:
     name: "Test ${{ matrix.name }} | ${{ matrix.platform }} | features: [${{ matrix.features }}]"
     needs: matrix
@@ -99,26 +99,10 @@ jobs:
       - name: Setup cache
         uses: Swatinem/rust-cache@v2
 
-      - name: Run `cargo test`
+      - name: Test
         run: cargo test --color always --package ${{ matrix.name }} --features "${{ matrix.features }}"
-        continue-on-error: true  # WARNING: only for this example, remove it!
+        if: ${{ success() || failure() }}
 
-  bench:
-    name: "Benchmark ${{ matrix.name }} | ${{ matrix.platform }} | features: [${{ matrix.features }}]"
-    needs: matrix
-    strategy:
-      matrix: ${{ fromJson(needs.matrix.outputs.matrix) }}
-    runs-on: ${{ matrix.platform }}
-    steps:
-      - name: Checkout sources
-        uses: actions/checkout@v3
-
-      - name: Update Rust
-        run: rustup update
-
-      - name: Setup cache
-        uses: Swatinem/rust-cache@v2
-
-      - name: Run `cargo bench`
+      - name: Bench
         run: cargo bench --color always --package ${{ matrix.name }} --features "${{ matrix.features }}"
-        continue-on-error: true  # WARNING: only for this example, remove it!
+        if: ${{ success() || failure() }}
