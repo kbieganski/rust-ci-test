@@ -1,0 +1,65 @@
+on: [push, pull_request]
+
+name: Check and test
+
+jobs:
+  general:
+    name: General checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Update Rust
+        run: rustup update
+
+      - name: Setup cache
+        uses: Swatinem/rust-cache@v2
+
+      - name: Install `cargo-deny`, `cargo-geiger`
+        run: cargo install cargo-deny
+
+      - name: Formatting
+        run: cargo fmt --all -- --check
+
+      - name: Audit
+        run: cargo deny check --color always --all-features
+        if: ${{ success() || failure() }}
+
+  platform:
+    name: ${{ matrix.platform.desc }}
+    strategy:
+      matrix:
+        platform: [{name: ubuntu-latest, desc: Linux},
+                   {name: macos-latest, desc: MacOS},
+                   {name: windows-latest, desc: Windows}]
+      fail-fast: false
+    runs-on: ${{ matrix.platform.name }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Update Rust
+        run: rustup update
+
+      - name: Install `cargo-hack`
+        run: cargo install cargo-hack
+
+      - name: Check
+        run: cargo hack --workspace --feature-powerset --color always check
+
+      - name: Build
+        run: cargo hack --workspace --feature-powerset --color always build
+        if: ${{ success() || failure() }}
+
+      - name: Lint
+        run: cargo hack --workspace --feature-powerset --color always clippy --no-deps -- -D warnings
+        if: ${{ success() || failure() }}
+
+      - name: Test
+        run: cargo hack --workspace --feature-powerset --color always test
+        if: ${{ success() || failure() }}
+
+      - name: Bench
+        run: cargo hack --workspace --feature-powerset --color always bench
+        if: ${{ success() || failure() }}
