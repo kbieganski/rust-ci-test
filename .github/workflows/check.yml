@@ -23,7 +23,7 @@ jobs:
         run: cargo fmt --all -- --check
 
       - name: Audit
-        run: cargo deny check --color always --all-features
+        run: cargo deny --color always --all-features check
         if: ${{ success() || failure() }}
 
   platform:
