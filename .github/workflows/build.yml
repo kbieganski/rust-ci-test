@@ -160,7 +160,7 @@ jobs:
           mkdir -p out/lib
           mv target/x86_64-pc-windows-${{ matrix.target }}/release/*.exe out
           mv target/x86_64-pc-windows-${{ matrix.target }}/release/*.rlib out/lib
-          mv target/doc LICENSE README.md out
+          mv target/doc, LICENSE, README.md out
 
       - name: Upload
         uses: actions/upload-artifact@v3
