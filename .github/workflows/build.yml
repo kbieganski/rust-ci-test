@@ -11,11 +11,11 @@ env:
 
 jobs:
   test:
-    name: Check & Test
+    name: Test
     uses: ./.github/workflows/test.yml
 
   linux:
-    name: Linux | ${{ matrix.target }}
+    name: Build | Linux | ${{ matrix.target }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -36,7 +36,7 @@ jobs:
 
       - name: Build
         run: |
-          cargo run --release --target ${{ matrix.target }}
+          cargo build --lib --bins --examples --release --target ${{ matrix.target }}
           mv target/${{ matrix.target }}-unknown-linux-gnu/release/${{ env.EXECUTABLE }} .
 
       - name: Upload
@@ -49,7 +49,7 @@ jobs:
           name: linux-${{ matrix.target }}
 
   macos:
-    name: macOS | ${{ matrix.target }}
+    name: Build | macOS | ${{ matrix.target }}
     runs-on: macos-latest
     strategy:
       matrix:
@@ -84,7 +84,7 @@ jobs:
           name: macos-${{ matrix.target }}
 
   macos-universal:
-    name: macOS | Universal Binary
+    name: Build | macOS | Universal Binary
     runs-on: macos-latest
     needs: macos
 
@@ -113,7 +113,7 @@ jobs:
           name: macos-universal
 
   windows:
-    name: Windows
+    name: Build | Windows | ${{ matrix.target }}
     runs-on: windows-latest
     strategy:
       matrix:

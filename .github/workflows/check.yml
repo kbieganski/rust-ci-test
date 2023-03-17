@@ -4,7 +4,7 @@ on: [workflow_call]
 
 jobs:
   general:
-    name: General
+    name: Check | General
     runs-on: ubuntu-latest
 
     steps:
@@ -30,7 +30,7 @@ jobs:
         continue-on-error: true  # TODO: remove
 
   platform:
-    name: ${{ matrix.platform.pretty-name }} | ${{ matrix.toolchain }}
+    name: Check | ${{ matrix.platform.pretty-name }} | ${{ matrix.toolchain }}
     strategy:
       matrix:
         platform: [{id: ubuntu-latest, pretty-name: Linux},

@@ -1,4 +1,4 @@
-name: Check & Test
+name: Check
 
 on:
   pull_request:
@@ -12,7 +12,7 @@ jobs:
     uses: ./.github/workflows/check.yml
 
   test:
-    name: ${{ matrix.platform.pretty-name }} | ${{ matrix.toolchain }}
+    name: Test | ${{ matrix.platform.pretty-name }} | ${{ matrix.toolchain }}
     strategy:
       matrix:
         platform: [{id: ubuntu-latest, name: linux, pretty-name: Linux},
@@ -43,7 +43,7 @@ jobs:
 
       - name: Coverage
         run: |
-          cargo tarpaulin --workspace --all-features --color always
+          cargo tarpaulin --workspace --all-features --color always --out Html
           mv tarpaulin-report.html coverage.html
         if: ${{ success() || failure() }}
 
