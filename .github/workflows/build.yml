@@ -14,9 +14,12 @@ jobs:
     name: Check & Test
     uses: ./.github/workflows/test.yml
 
-  build-linux:
-    name: Linux
+  linux:
+    name: Linux | ${{ matrix.target }}
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target: [x86_64, aarch64]
     needs: test
 
     steps:
@@ -24,15 +27,17 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Setup Rust
-        run: rustup update
+        run: |
+          rustup update
+          rustup target add ${{ matrix.target }}-unknown-linux-gnu
 
       - name: Setup cache
         uses: Swatinem/rust-cache@v2
 
       - name: Build
         run: |
-          cargo run --release --target x86_64-unknown-linux-gnu
-          mv target/x86_64-unknown-linux-gnu/release/${{ env.executable }} .
+          cargo run --release --target ${{ matrix.target }}
+          mv target/${{ matrix.target }}-unknown-linux-gnu/release/${{ env.executable }} .
 
       - name: Upload
         uses: actions/upload-artifact@v3
@@ -41,11 +46,14 @@ jobs:
             ${{ env.executable }}
             README.md
             LICENSE
-          name: linux
+          name: linux-${{ matrix.target }}
 
-  build-macos:
-    name: macOS
+  macos:
+    name: macOS | ${{ matrix.target }}
     runs-on: macos-latest
+    strategy:
+      matrix:
+        target: [x86_64, aarch64]
     needs: test
 
     steps:
@@ -53,7 +61,9 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Setup Rust
-        run: rustup update
+        run: |
+          rustup update
+          rustup target add ${{ matrix.target }}-apple-darwin
 
       - name: Setup cache
         uses: Swatinem/rust-cache@v2
@@ -62,19 +72,7 @@ jobs:
         run: |
           SDKROOT=$(xcrun -sdk macosx --show-sdk-path) \
             MACOSX_DEPLOYMENT_TARGET=$(xcrun -sdk macosx --show-sdk-platform-version) \
-            cargo build --release --target aarch64-apple-darwin
-
-      - name: Build (x86 Apple)
-        run: |
-          SDKROOT=$(xcrun -sdk macosx --show-sdk-path) \
-            MACOSX_DEPLOYMENT_TARGET=$(xcrun -sdk macosx --show-sdk-platform-version) \
-            cargo build --release --target x86_64-apple-darwin
-
-      - name: Universal Binary
-        run: |
-          lipo -create -output ${{ env.executable }} \
-            target/aarch64-apple-darwin/release/${{ env.executable }} \
-            target/x86_64-apple-darwin/release/${{ env.executable }}
+            cargo build --release --target ${{ matrix.target }}-apple-darwin
 
       - name: Upload
         uses: actions/upload-artifact@v3
@@ -83,12 +81,43 @@ jobs:
             ${{ env.executable }}
             README.md
             LICENSE
-          name: macos
+          name: macos-${{ matrix.target }}
 
+  macos-universal:
+    name: macOS | Universal Binary
+    runs-on: macos-latest
+    needs: macos
 
-  build-windows:
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Download
+        uses: actions/download-artifact@v3
+        with:
+          path: ./builds
+
+      - name: Universal Binary
+        run: |
+          lipo -create -output ${{ env.executable }} \
+            builds/macos-aarch64/${{ env.executable }} \
+            builds/macos-x86_64/${{ env.executable }}
+
+      - name: Upload
+        uses: actions/upload-artifact@v3
+        with:
+          path: |
+            ${{ env.executable }}
+            README.md
+            LICENSE
+          name: macos-universal
+
+  windows:
     name: Windows
     runs-on: windows-latest
+    strategy:
+      matrix:
+        target: [gnu, msvc]
     needs: test
 
     steps:
@@ -96,15 +125,17 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Setup Rust
-        run: rustup update
+        run: |
+          rustup update
+          rustup target add x86-64-pc-windows-${{ matrix.target }}
 
       - name: Setup cache
         uses: Swatinem/rust-cache@v2
 
       - name: Build
         run: |
-          cargo build --release --target x86_64-pc-windows-msvc
-          mv target/x86_64-pc-windows-msvc/release/${{ env.executable }}.exe .
+          cargo build --release --target x86_64-pc-windows-${{ matrix.target }}
+          mv target/x86_64-pc-windows-${{ matrix.target }}/release/${{ env.executable }}.exe .
 
       - name: Upload
         uses: actions/upload-artifact@v3
@@ -113,4 +144,4 @@ jobs:
             ${{ env.executable }}.exe
             README.md
             LICENSE
-          name: win
+          name: win-${{ matrix.target }}
