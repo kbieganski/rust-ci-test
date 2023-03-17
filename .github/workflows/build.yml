@@ -19,6 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
+        profile: [dev, release]
         target: [x86_64, aarch64]
     needs: test
 
@@ -36,16 +37,22 @@ jobs:
 
       - name: Build
         run: |
-          cargo build --lib --bins --examples --release --target ${{ matrix.target }}
-          mv target/${{ matrix.target }}-unknown-linux-gnu/release/${{ env.EXECUTABLE }} .
+          cargo build --workspace --lib --bins \
+            --profile ${{ matrix.profile }} --target ${{ matrix.target }}-unknown-linux-gnu \
+            --color always
+          cargo doc --workspace --no-deps --color always
+
+      - name: Prepare
+        run: |
+          mkdir -p out/lib
+          mv $(find target/${{ matrix.target }}-unknown-linux-gnu/* -maxdepth 1 -type f -executable) out
+          mv target/${{ matrix.target }}-unknown-linux-gnu/*/*.rlib out/lib
+          mv target/doc LICENSE README.md out
 
       - name: Upload
         uses: actions/upload-artifact@v3
         with:
-          path: |
-            ${{ env.EXECUTABLE }}
-            README.md
-            LICENSE
+          path: out
           name: linux-${{ matrix.target }}
 
   macos:
@@ -68,19 +75,26 @@ jobs:
       - name: Setup cache
         uses: Swatinem/rust-cache@v2
 
-      - name: Build (Apple Silicon)
+      - name: Build
         run: |
           SDKROOT=$(xcrun -sdk macosx --show-sdk-path) \
             MACOSX_DEPLOYMENT_TARGET=$(xcrun -sdk macosx --show-sdk-platform-version) \
-            cargo build --release --target ${{ matrix.target }}-apple-darwin
+            cargo build --workspace --lib --bins \
+              --release --target ${{ matrix.target }}-apple-darwin \
+              -- color always
+          cargo doc --workspace --no-deps --color always
+
+      - name: Prepare
+        run: |
+          mkdir -p out/lib
+          mv $(find target/${{ matrix.target }}-apple-darwin/release -maxdepth 1 -type f -executable) out
+          mv target/${{ matrix.target }}-apple-darwin/release/*.rlib out/lib
+          mv target/doc LICENSE README.md out
 
       - name: Upload
         uses: actions/upload-artifact@v3
         with:
-          path: |
-            ${{ env.EXECUTABLE }}
-            README.md
-            LICENSE
+          path: out
           name: macos-${{ matrix.target }}
 
   macos-universal:
@@ -97,19 +111,24 @@ jobs:
         with:
           path: ./builds
 
-      - name: Universal Binary
+      - name: Combine
         run: |
-          lipo -create -output ${{ env.EXECUTABLE }} \
-            builds/macos-aarch64/${{ env.EXECUTABLE }} \
-            builds/macos-x86_64/${{ env.EXECUTABLE }}
+          for EXECUTABLE in $(find builds/macos-aarch64); do
+            lipo -create -output $EXECUTABLE \
+              builds/macos-aarch64/$EXECUTABLE \
+              builds/macos-x86_64/$EXECUTABLE
+          done
+
+      - name: Prepare
+        run: |
+          mkdir out
+          mv $(find . -maxdepth 1 -type f -executable) out
+          mv target/doc LICENSE README.md out
 
       - name: Upload
         uses: actions/upload-artifact@v3
         with:
-          path: |
-            ${{ env.EXECUTABLE }}
-            README.md
-            LICENSE
+          path: out
           name: macos-universal
 
   windows:
@@ -134,8 +153,17 @@ jobs:
 
       - name: Build
         run: |
-          cargo build --release --target x86_64-pc-windows-${{ matrix.target }}
-          mv target/x86_64-pc-windows-${{ matrix.target }}/release/${{ env.EXECUTABLE }}.exe .
+          cargo build --workspace --lib --bins \
+            --release --target x86_64-pc-windows-${{ matrix.target }} \
+            --color always
+          cargo doc --workspace --no-deps --color always
+
+      - name: Prepare
+        run: |
+          mkdir -p out/lib
+          mv target/x86_64-pc-windows-${{ matrix.target }}/release/*.exe out
+          mv target/x86_64-pc-windows-${{ matrix.target }}/release/*.rlib out/lib
+          mv target/doc LICENSE README.md out
 
       - name: Upload
         uses: actions/upload-artifact@v3
