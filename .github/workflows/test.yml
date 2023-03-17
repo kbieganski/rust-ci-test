@@ -12,12 +12,12 @@ jobs:
     uses: ./.github/workflows/check.yml
 
   test:
-    name: ${{ matrix.platform.name }}
+    name: ${{ matrix.platform.pretty-name }}
     strategy:
       matrix:
-        platform: [{id: ubuntu-latest, name: Linux},
-                   {id: macos-latest, name: MacOS},
-                   {id: windows-latest, name: Windows}]
+        platform: [{id: ubuntu-latest, name: linux, pretty-name: Linux},
+                   {id: macos-latest, name: macos, pretty-name: macOS},
+                   {id: windows-latest, name: win, pretty-name: Windows}]
       fail-fast: false
     runs-on: ${{ matrix.platform.id }}
     needs: check
@@ -26,18 +26,31 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Update Rust
+      - name: Setup Rust
         run: rustup update
 
       - name: Setup cache
         uses: Swatinem/rust-cache@v2
 
-      - name: Install cargo-hack
-        run: cargo install cargo-hack
+      - name: Install cargo-hack, cargo-tarpaulin
+        run: cargo install cargo-hack cargo-tarpaulin
 
       - name: Test
         run: cargo hack --workspace --feature-powerset --color always test
 
+      - name: Coverage
+        run: |
+          cargo tarpaulin --workspace --all-features --color always
+          mv tarpaulin-report.html coverage.html
+        if: ${{ success() || failure() }}
+
       - name: Bench
         run: cargo hack --workspace --feature-powerset --color always bench
         if: ${{ success() || failure() }}
+
+      - name: Upload coverage
+        uses: actions/upload-artifact@v3
+        with:
+          path: coverage.html
+          name: coverage-${{ matrix.platform.name }}
+

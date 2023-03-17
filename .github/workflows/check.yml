@@ -11,7 +11,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Update Rust
+      - name: Setup Rust
         run: rustup update
 
       - name: Setup cache
@@ -28,12 +28,12 @@ jobs:
         if: ${{ success() || failure() }}
 
   platform:
-    name: ${{ matrix.platform.name }}
+    name: ${{ matrix.platform.pretty-name }}
     strategy:
       matrix:
-        platform: [{id: ubuntu-latest, name: Linux},
-                   {id: macos-latest, name: MacOS},
-                   {id: windows-latest, name: Windows}]
+        platform: [{id: ubuntu-latest, pretty-name: Linux},
+                   {id: macos-latest, pretty-name: macOS},
+                   {id: windows-latest, pretty-name: Windows}]
       fail-fast: false
     runs-on: ${{ matrix.platform.id }}
 
@@ -41,8 +41,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Update Rust
-        run: rustup update
+      - name: Setup Rust
+        run: |
+          rustup update
+          rustup install nightly
+          rustup component add miri --toolchain nightly
 
       - name: Setup cache
         uses: Swatinem/rust-cache@v2
@@ -56,3 +59,10 @@ jobs:
       - name: Lint
         run: cargo hack --workspace --feature-powerset --color always clippy --no-deps -- -D warnings
         if: ${{ success() || failure() }}
+
+      - name: Miri
+        run: cargo +nightly miri test --workspace --all-features --color always
+        if: ${{ success() || failure() }}
+        env:
+          RUSTFLAGS: -A warnings
+          MIRIFLAGS: -Zmiri-disable-isolation

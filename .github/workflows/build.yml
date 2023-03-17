@@ -23,19 +23,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Update Rust
+      - name: Setup Rust
         run: rustup update
 
       - name: Setup cache
         uses: Swatinem/rust-cache@v2
 
       - name: Build
-        run: cargo run --release --target x86_64-unknown-linux-gnu
-
-      - name: Prepare
         run: |
+          cargo run --release --target x86_64-unknown-linux-gnu
           mv target/x86_64-unknown-linux-gnu/release/${{ env.executable }} .
-          strip ${{ env.executable }}
 
       - name: Upload
         uses: actions/upload-artifact@v3
@@ -47,7 +44,7 @@ jobs:
           name: linux
 
   build-macos:
-    name: MacOS
+    name: macOS
     runs-on: macos-latest
     needs: test
 
@@ -55,25 +52,25 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Update Rust
+      - name: Setup Rust
         run: rustup update
 
       - name: Setup cache
         uses: Swatinem/rust-cache@v2
 
-      - name: Build for Apple Silicon
+      - name: Build (Apple Silicon)
         run: |
           SDKROOT=$(xcrun -sdk macosx --show-sdk-path) \
             MACOSX_DEPLOYMENT_TARGET=$(xcrun -sdk macosx --show-sdk-platform-version) \
             cargo build --release --target aarch64-apple-darwin
 
-      - name: Build for x86 Apple
+      - name: Build (x86 Apple)
         run: |
           SDKROOT=$(xcrun -sdk macosx --show-sdk-path) \
             MACOSX_DEPLOYMENT_TARGET=$(xcrun -sdk macosx --show-sdk-platform-version) \
             cargo build --release --target x86_64-apple-darwin
 
-      - name: Create Universal Binary
+      - name: Universal Binary
         run: |
           lipo -create -output ${{ env.executable }} \
             target/aarch64-apple-darwin/release/${{ env.executable }} \
@@ -98,14 +95,15 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
+      - name: Setup Rust
+        run: rustup update
+
       - name: Setup cache
         uses: Swatinem/rust-cache@v2
 
-      - name: Build release
-        run: cargo build --release --target x86_64-pc-windows-msvc
-
-      - name: Prepare package
+      - name: Build
         run: |
+          cargo build --release --target x86_64-pc-windows-msvc
           mv target/x86_64-pc-windows-msvc/release/${{ env.executable }}.exe .
 
       - name: Upload
@@ -115,4 +113,4 @@ jobs:
             ${{ env.executable }}.exe
             README.md
             LICENSE
-          name: windows
+          name: win

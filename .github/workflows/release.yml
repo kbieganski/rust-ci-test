@@ -40,11 +40,11 @@ jobs:
           tag: ${{ github.ref }}
           overwrite: true
 
-      - name: Package (MacOS)
+      - name: Package (macOS)
         run: |
           tar -czf ${{ env.executable }}_macos.tar.gz builds/macos/*
 
-      - name: Upload (MacOS)
+      - name: Upload (macOS)
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
