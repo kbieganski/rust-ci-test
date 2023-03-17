@@ -29,12 +29,13 @@ jobs:
         continue-on-error: true  # TODO: remove
 
   platform:
-    name: ${{ matrix.platform.pretty-name }}
+    name: ${{ matrix.platform.pretty-name }} | ${{ matrix.toolchain }}
     strategy:
       matrix:
         platform: [{id: ubuntu-latest, pretty-name: Linux},
                    {id: macos-latest, pretty-name: macOS},
                    {id: windows-latest, pretty-name: Windows}]
+        toolchain: [stable, nightly]
       fail-fast: false
     runs-on: ${{ matrix.platform.id }}
 
@@ -44,9 +45,8 @@ jobs:
 
       - name: Setup Rust
         run: |
-          rustup update
-          rustup install nightly
-          rustup component add miri --toolchain nightly
+          rustup install ${{ matrix.toolchain }}
+          rustup default ${{ matrix.toolchain }}
 
       - name: Setup cache
         uses: Swatinem/rust-cache@v2
@@ -63,8 +63,10 @@ jobs:
         continue-on-error: true  # TODO: remove
 
       - name: Miri
-        run: cargo +nightly miri test --workspace --all-features --color always
-        if: ${{ success() || failure() }}
+        run: |
+          rustup component add miri
+          cargo miri test --workspace --all-features --color always
+        if: ${{ (success() || failure()) && matrix.toolchain == 'nightly' }}
         env:
           RUSTFLAGS: -A warnings
           MIRIFLAGS: -Zmiri-disable-isolation
