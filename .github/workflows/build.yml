@@ -15,7 +15,7 @@ jobs:
     uses: ./.github/workflows/test.yml
 
   linux:
-    name: Build | Linux | ${{ matrix.target }}
+    name: Build | Linux | ${{ matrix.target }} | ${{ matrix.profile }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
