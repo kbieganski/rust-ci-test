@@ -7,7 +7,7 @@ on:
   workflow_call:
 
 env:
-  executable: example
+  EXECUTABLE: example
 
 jobs:
   test:
@@ -37,13 +37,13 @@ jobs:
       - name: Build
         run: |
           cargo run --release --target ${{ matrix.target }}
-          mv target/${{ matrix.target }}-unknown-linux-gnu/release/${{ env.executable }} .
+          mv target/${{ matrix.target }}-unknown-linux-gnu/release/${{ env.EXECUTABLE }} .
 
       - name: Upload
         uses: actions/upload-artifact@v3
         with:
           path: |
-            ${{ env.executable }}
+            ${{ env.EXECUTABLE }}
             README.md
             LICENSE
           name: linux-${{ matrix.target }}
@@ -78,7 +78,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           path: |
-            ${{ env.executable }}
+            ${{ env.EXECUTABLE }}
             README.md
             LICENSE
           name: macos-${{ matrix.target }}
@@ -99,15 +99,15 @@ jobs:
 
       - name: Universal Binary
         run: |
-          lipo -create -output ${{ env.executable }} \
-            builds/macos-aarch64/${{ env.executable }} \
-            builds/macos-x86_64/${{ env.executable }}
+          lipo -create -output ${{ env.EXECUTABLE }} \
+            builds/macos-aarch64/${{ env.EXECUTABLE }} \
+            builds/macos-x86_64/${{ env.EXECUTABLE }}
 
       - name: Upload
         uses: actions/upload-artifact@v3
         with:
           path: |
-            ${{ env.executable }}
+            ${{ env.EXECUTABLE }}
             README.md
             LICENSE
           name: macos-universal
@@ -135,13 +135,13 @@ jobs:
       - name: Build
         run: |
           cargo build --release --target x86_64-pc-windows-${{ matrix.target }}
-          mv target/x86_64-pc-windows-${{ matrix.target }}/release/${{ env.executable }}.exe .
+          mv target/x86_64-pc-windows-${{ matrix.target }}/release/${{ env.EXECUTABLE }}.exe .
 
       - name: Upload
         uses: actions/upload-artifact@v3
         with:
           path: |
-            ${{ env.executable }}.exe
+            ${{ env.EXECUTABLE }}.exe
             README.md
             LICENSE
           name: win-${{ matrix.target }}

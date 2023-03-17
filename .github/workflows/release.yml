@@ -5,16 +5,23 @@ on:
     tags: ["[0-9]+.[0-9]+*"]
 
 env:
-  executable: example
+  EXECUTABLE: example
 
 jobs:
   build:
     name: Build
     uses: ./.github/workflows/build.yml
 
-  deploy:
-    name: Deploy
+  unixlike:
+    name: ${{ target.pretty-name }}
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target: [{id: linux-x86_64, pretty-name: Linux | x86_64 },
+                 {id: linux-aarch64, pretty-name: Linux | aarch64 },
+                 {id: macos-x86_64, pretty-name: MacOS | x86_64 },
+                 {id: macos-aarch64, pretty-name: MacOS | Apple Silicon },
+                 {id: macos-universal, pretty-name: MacOS | Universal Binary }]
     needs: build
 
     steps:
@@ -27,44 +34,50 @@ jobs:
         with:
           path: ./builds
 
-      - name: Package (Linux)
+      - name: Package
         run: |
-          tar -czf ${{ env.executable }}_linux.tar.gz builds/linux/*
+          tar -czf ${{ env.EXECUTABLE }}_linux.tar.gz builds/${{ target.id }}/*
 
-      - name: Upload (Linux)
+      - name: Upload
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: ${{ env.executable }}_linux.tar.gz
-          asset_name: ${{ env.executable }}_${{ steps.tag.outputs.tag }}_linux.tar.gz
+          file: ${{ env.EXECUTABLE }}-${{ target.id }}.tar.gz
+          asset_name: ${{ env.EXECUTABLE }}_${{ steps.tag.outputs.tag }}-${{ target.id }}.tar.gz
           tag: ${{ github.ref }}
           overwrite: true
 
-      - name: Package (macOS)
-        run: |
-          tar -czf ${{ env.executable }}_macos.tar.gz builds/macos/*
+  windows:
+    name: ${{ target.pretty-name }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target: [{id: win-gnu, pretty-name: Windows | GNU },
+                 {id: win-msvc, pretty-name: Linux | MSVC }]
+    needs: build
 
-      - name: Upload (macOS)
-        uses: svenstaro/upload-release-action@v2
+    steps:
+      - name: Get tag
+        id: tag
+        uses: dawidd6/action-get-tag@v1
+
+      - name: Download
+        uses: actions/download-artifact@v3
         with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: builds/macos/${{ env.executable }}.dmg
-          asset_name: ${{ env.executable }}_${{ steps.tag.outputs.tag }}_macos.dmg
-          tag: ${{ github.ref }}
-          overwrite: true
+          path: ./builds
 
-      - name: Package (Windows)
+      - name: Package
         uses: vimtor/action-zip@v1
         with:
-          files: builds/windows
+          files: builds/${{ target.id }}
           recursive: false
-          dest: ${{ env.executable }}_windows.zip
+          dest: ${{ env.EXECUTABLE }}-${{ target.id }}.zip
 
-      - name: Upload (Windows)
+      - name: Upload
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: ${{ env.executable }}_windows.zip
-          asset_name: ${{ env.executable }}_${{ steps.tag.outputs.tag }}_windows.zip
+          file: ${{ env.EXECUTABLE }}-${{ target.id }}.zip
+          asset_name: ${{ env.EXECUTABLE }}_${{ steps.tag.outputs.tag }}-${{ target.id }}.zip
           tag: ${{ github.ref }}
           overwrite: true
