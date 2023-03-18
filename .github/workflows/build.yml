@@ -128,7 +128,7 @@ jobs:
         run: |
           mkdir out
           mv $(find . -maxdepth 1 -type f -perm +111) out
-          mv builds/macos-aarch64/{doc,LICENSE,README.md} out
+          mv builds/macos-aarch64/out/{doc,LICENSE,README.md} out
 
       - name: Upload
         uses: actions/upload-artifact@v3
