@@ -57,7 +57,7 @@ jobs:
     runs-on: macos-latest
     strategy:
       matrix:
-        target: [x86_64, aarch64]
+        target: [aarch64, x86_64]
     needs: test
 
     steps:
@@ -108,9 +108,16 @@ jobs:
         with:
           path: ./builds
 
+      - name: Debug
+        run: |
+          find builds/macos-aarch64
+          find builds/macos-x86_64
+          find builds/macos-aarch64 -type f -perm +111
+          find builds/macos-x86_64 -type f -perm +111
+
       - name: Combine
         run: |
-          for EXECUTABLE in $(find builds/macos-aarch64); do
+          for EXECUTABLE in $(find builds/macos-aarch64 -maxdepth 1 -type f -perm +111); do
             lipo -create -output $EXECUTABLE \
               builds/macos-aarch64/$EXECUTABLE \
               builds/macos-x86_64/$EXECUTABLE
