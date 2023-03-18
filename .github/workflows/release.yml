@@ -36,7 +36,8 @@ jobs:
 
       - name: Package
         run: |
-          tar -czf ${{ env.EXECUTABLE }}_linux.tar.gz builds/${{ target.id }}/*
+          tar xvf builds/${{ target.id }}/out.tar --directory build/${{ target.id }}
+          tar czf ${{ env.EXECUTABLE }}_linux.tar.gz builds/${{ target.id }}/*
 
       - name: Upload
         uses: svenstaro/upload-release-action@v2
