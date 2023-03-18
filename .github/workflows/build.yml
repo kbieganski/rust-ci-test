@@ -45,11 +45,12 @@ jobs:
           mv $(find target/${{ matrix.target }}-unknown-linux-gnu/* -maxdepth 1 -type f -executable) out
           mv target/${{ matrix.target }}-unknown-linux-gnu/*/*.rlib out/lib
           mv target/doc LICENSE README.md out
+          tar -cf out.tar out  # preserve permissions
 
       - name: Upload
         uses: actions/upload-artifact@v3
         with:
-          path: out
+          path: out.tar
           name: linux-${{ matrix.target }}
 
   macos:
@@ -87,11 +88,12 @@ jobs:
           mv $(find target/${{ matrix.target }}-apple-darwin/release -maxdepth 1 -type f -perm +111) out
           mv target/${{ matrix.target }}-apple-darwin/release/*.rlib out/lib
           mv target/doc LICENSE README.md out
+          tar -cf out.tar out  # preserve permissions
 
       - name: Upload
         uses: actions/upload-artifact@v3
         with:
-          path: out
+          path: out.tar
           name: macos-${{ matrix.target }}
 
   macos-universal:
@@ -100,9 +102,6 @@ jobs:
     needs: macos
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-
       - name: Download
         uses: actions/download-artifact@v3
         with:
@@ -127,7 +126,7 @@ jobs:
         run: |
           mkdir out
           mv $(find . -maxdepth 1 -type f -perm +111) out
-          mv target/doc LICENSE README.md out
+          mv builds/macos-aarch64/{doc,LICENSE,README.md} out
 
       - name: Upload
         uses: actions/upload-artifact@v3
