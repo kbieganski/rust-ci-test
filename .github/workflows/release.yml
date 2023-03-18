@@ -36,7 +36,7 @@ jobs:
 
       - name: Package
         run: |
-          tar xvf builds/${{ target.id }}/out.tar --directory build/${{ target.id }}
+          tar xvf builds/${{ target.id }}/out.tar --directory builds/${{ target.id }}
           tar czf ${{ env.EXECUTABLE }}_linux.tar.gz builds/${{ target.id }}/*
 
       - name: Upload

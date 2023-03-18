@@ -109,8 +109,8 @@ jobs:
 
       - name: Debug
         run: |
-          tar xvf builds/macos-aarch64/out.tar --directory build/macos-aarch64
-          tar xvf builds/macos-x86_64/out.tar --directory build/macos-x86_64
+          tar xvf builds/macos-aarch64/out.tar --directory builds/macos-aarch64
+          tar xvf builds/macos-x86_64/out.tar --directory builds/macos-x86_64
           find builds/macos-aarch64
           find builds/macos-x86_64
           find builds/macos-aarch64 -type f -perm +111
