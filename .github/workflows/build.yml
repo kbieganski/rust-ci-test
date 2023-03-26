@@ -119,6 +119,9 @@ jobs:
       - name: Combine
         run: |
           for EXECUTABLE in $(find builds/macos-aarch64 -maxdepth 1 -type f -perm +111); do
+            echo $EXECUTABLE
+            EXECUTABLE=$(basename $EXECUTABLE)
+            echo $EXECUTABLE
             lipo -create -output $EXECUTABLE \
               builds/macos-aarch64/$EXECUTABLE \
               builds/macos-x86_64/$EXECUTABLE
