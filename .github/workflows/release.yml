@@ -25,10 +25,6 @@ jobs:
     needs: build
 
     steps:
-      - name: Get tag
-        id: tag
-        uses: dawidd6/action-get-tag@v1
-
       - name: Download
         uses: actions/download-artifact@v3
         with:
@@ -44,7 +40,7 @@ jobs:
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: ${{ env.EXECUTABLE }}.tar.gz
-          asset_name: ${{ env.EXECUTABLE }}-${{ steps.tag.outputs.tag }}-${{ matrix.target.id }}.tar.gz
+          asset_name: ${{ env.EXECUTABLE }}-$tag-${{ matrix.target.id }}.tar.gz
           tag: ${{ github.ref }}
           overwrite: true
 
@@ -58,10 +54,6 @@ jobs:
     needs: build
 
     steps:
-      - name: Get tag
-        id: tag
-        uses: dawidd6/action-get-tag@v1
-
       - name: Download
         uses: actions/download-artifact@v3
         with:
@@ -79,6 +71,6 @@ jobs:
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: ${{ env.EXECUTABLE }}.zip
-          asset_name: ${{ env.EXECUTABLE }}-${{ steps.tag.outputs.tag }}-${{ matrix.target.id }}.zip
+          asset_name: ${{ env.EXECUTABLE }}-$tag-${{ matrix.target.id }}.zip
           tag: ${{ github.ref }}
           overwrite: true
