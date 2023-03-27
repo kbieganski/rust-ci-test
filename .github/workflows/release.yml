@@ -74,3 +74,24 @@ jobs:
           asset_name: ${{ env.EXECUTABLE }}-$tag-${{ matrix.target.id }}.zip
           tag: ${{ github.ref }}
           overwrite: true
+
+  website:
+    name: Website
+    runs-on: ubuntu-latest
+    needs: [unixlike, windows]
+
+    steps:
+      - name: Download
+        uses: actions/download-artifact@v3
+        with:
+          path: ./builds
+
+      - name: Prepare
+        run: |
+          mkdir out
+          mv builds/linux-x86_64/out/{README.md,doc} out
+
+      - name: Deploy
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: out
