@@ -13,7 +13,7 @@ jobs:
     uses: ./.github/workflows/build.yml
 
   unixlike:
-    name: ${{ target.pretty-name }}
+    name: ${{ matrix.target.pretty-name }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -36,20 +36,20 @@ jobs:
 
       - name: Package
         run: |
-          tar xvf builds/${{ target.id }}/out.tar --directory builds/${{ target.id }}
-          tar czf ${{ env.EXECUTABLE }}_linux.tar.gz builds/${{ target.id }}/*
+          tar xvf builds/${{ matrix.target.id }}/out.tar --directory builds/${{ matrix.target.id }}
+          tar czf ${{ env.EXECUTABLE }}_linux.tar.gz builds/${{ matrix.target.id }}/*
 
       - name: Upload
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: ${{ env.EXECUTABLE }}-${{ target.id }}.tar.gz
-          asset_name: ${{ env.EXECUTABLE }}_${{ steps.tag.outputs.tag }}-${{ target.id }}.tar.gz
+          file: ${{ env.EXECUTABLE }}-${{ matrix.target.id }}.tar.gz
+          asset_name: ${{ env.EXECUTABLE }}_${{ steps.tag.outputs.tag }}-${{ matrix.target.id }}.tar.gz
           tag: ${{ github.ref }}
           overwrite: true
 
   windows:
-    name: ${{ target.pretty-name }}
+    name: ${{ matrix.target.pretty-name }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -70,15 +70,15 @@ jobs:
       - name: Package
         uses: vimtor/action-zip@v1
         with:
-          files: builds/${{ target.id }}
+          files: builds/${{ matrix.target.id }}
           recursive: false
-          dest: ${{ env.EXECUTABLE }}-${{ target.id }}.zip
+          dest: ${{ env.EXECUTABLE }}-${{ matrix.target.id }}.zip
 
       - name: Upload
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: ${{ env.EXECUTABLE }}-${{ target.id }}.zip
-          asset_name: ${{ env.EXECUTABLE }}_${{ steps.tag.outputs.tag }}-${{ target.id }}.zip
+          file: ${{ env.EXECUTABLE }}-${{ matrix.target.id }}.zip
+          asset_name: ${{ env.EXECUTABLE }}_${{ steps.tag.outputs.tag }}-${{ matrix.target.id }}.zip
           tag: ${{ github.ref }}
           overwrite: true
