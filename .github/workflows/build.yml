@@ -107,21 +107,15 @@ jobs:
         with:
           path: ./builds
 
-      - name: Debug
+      - name: Unpack
         run: |
           tar xvf builds/macos-aarch64/out.tar --directory builds/macos-aarch64
           tar xvf builds/macos-x86_64/out.tar --directory builds/macos-x86_64
-          find builds/macos-aarch64
-          find builds/macos-x86_64
-          find builds/macos-aarch64 -type f -perm +111
-          find builds/macos-x86_64 -type f -perm +111
 
       - name: Combine
         run: |
           for EXECUTABLE in $(find builds/macos-aarch64/out -maxdepth 1 -type f -perm +111); do
-            echo $EXECUTABLE
             EXECUTABLE=$(basename $EXECUTABLE)
-            echo $EXECUTABLE
             lipo -create -output $EXECUTABLE \
               builds/macos-aarch64/out/$EXECUTABLE \
               builds/macos-x86_64/out/$EXECUTABLE
