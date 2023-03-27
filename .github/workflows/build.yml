@@ -132,11 +132,12 @@ jobs:
           mkdir out
           mv $(find . -maxdepth 1 -type f -perm +111) out
           mv builds/macos-aarch64/out/{doc,LICENSE,README.md} out
+          tar cf out.tar out  # preserve permissions
 
       - name: Upload
         uses: actions/upload-artifact@v3
         with:
-          path: out
+          path: out.tar
           name: macos-universal
 
   windows:
