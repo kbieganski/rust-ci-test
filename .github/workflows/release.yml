@@ -18,7 +18,7 @@ jobs:
     strategy:
       matrix:
         target: [{id: linux-x86_64, pretty-name: Linux | x86_64 },
-          #{id: linux-aarch64, pretty-name: Linux | aarch64 }, TODO: fix
+                 {id: linux-aarch64, pretty-name: Linux | aarch64 },
                  {id: macos-x86_64, pretty-name: MacOS | x86_64 },
                  {id: macos-aarch64, pretty-name: MacOS | Apple Silicon },
                  {id: macos-universal, pretty-name: MacOS | Universal Binary }]
