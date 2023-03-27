@@ -89,16 +89,17 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
-      - name: Download
-        uses: actions/download-artifact@v3
-        with:
-          path: ./builds
+      - name: Checkout
+        uses: actions/checkout@v3
 
       - name: Prepare
         run: |
-          tar xvf builds/linux-x86_64/out.tar --directory builds/linux-x86_64
+          pip install grip
+          grip --export README.md
+          cargo doc --workspace --no-deps --color always
           mkdir out
-          mv builds/linux-x86_64/out/{README.md,doc} out
+          mv README.html out/index.html
+          mv target out
 
       - name: Upload
         uses: actions/upload-pages-artifact@v1

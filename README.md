@@ -1,6 +1,6 @@
 # @actions-rs example
 
-[Docs](doc/example/index.html)
+[Docs](target/doc/example/index.html)
 
 ![CC0 licensed](https://img.shields.io/github/license/actions-rs/example)
 [![Gitter](https://badges.gitter.im/actions-rs/community.svg)](https://gitter.im/actions-rs/community)
